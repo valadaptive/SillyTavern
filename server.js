@@ -55,7 +55,7 @@ const characterCardParser = require('./src/character-card-parser.js');
 const contentManager = require('./src/endpoints/content-manager');
 const statsHelpers = require('./statsHelpers.js');
 const { readSecret, migrateSecrets, SECRET_KEYS } = require('./src/endpoints/secrets');
-const { delay, getVersion, deepMerge, getConfigValue, color, uuidv4 } = require('./src/util');
+const { delay, getVersion, deepMerge, getConfigValue, color, uuidv4, clientRelativePath } = require('./src/util');
 const { invalidateThumbnail, ensureThumbnailCache } = require('./src/endpoints/thumbnails');
 const { getTokenizerModel, getTiktokenTokenizer, loadTokenizers, TEXT_COMPLETION_MODELS, getSentencepiceTokenizer, sentencepieceTokenizers } = require('./src/endpoints/tokenizers');
 const { convertClaudePrompt } = require('./src/chat-completion');
@@ -2565,10 +2565,8 @@ app.post('/uploadimage', jsonParser, async (request, response) => {
         ensureDirectoryExistence(pathToNewFile);
         const imageBuffer = Buffer.from(base64Data, 'base64');
         await fs.promises.writeFile(pathToNewFile, imageBuffer);
-        // send the path to the image, relative to the client folder, which means removing the first folder from the path which is 'public'
-        // Use forward slashes, even on Windows
         pathToNewFile = pathToNewFile.split(path.sep).slice(1).join('/');
-        response.send({ path: pathToNewFile });
+        response.send({ path: clientRelativePath(pathToNewFile) });
     } catch (error) {
         console.log(error);
         response.status(500).send({ error: 'Failed to save the image' });
